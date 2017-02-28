@@ -3,7 +3,7 @@
 const net = require('net')
 
 const MSP = require('./node-msp.js')
-var msp = new MSP();
+var msp = new MSP()
 
 //console.log('Codes', Object.keys(msp.Codes))
 
@@ -33,7 +33,7 @@ var client = net.connect(2323, '192.168.1.115', function(){
 
 	msp.pull_FC_info()
 
-	ping()
+	//ping()
 })
 client.on('data', function(data){
 	//console.log(data)
@@ -48,4 +48,45 @@ function ping(){
 	client.write(buf)
 	var t = setTimeout(ping, 1500)
 }
+
+var server = net.createServer(function(socket){
+	console.log('client connected')
+	socket.msp = new MSP()
+
+	socket.on('error', function(err){
+		console.log((new Date()).getTime(), 'socket err', err)
+	})
+
+	// client >> server >> FC
+	socket.on('data', function(data){
+		//console.log((new Date()).getTime(), data)
+		socket.msp.readbytes(data)
+	})
+	socket.msp.on('frame', function(err, frame){
+		if(err) return
+		console.log((new Date()).getTime(), '>> FC', frame.code, frame.data)
+		var buf = msp.create_message(frame.code, frame.data, false)
+		client.write(buf)
+	})
+
+	// client << server << FC
+	var fromFC = function(err, frame){
+		if(err) return
+		//console.log((new Date()).getTime(), '<< FC', frame.code, frame.data)
+		var buf = msp.create_message(frame.code, frame.data, false)
+		socket.write(buf)
+	}
+	msp.on('frame', fromFC)
+
+	socket.on('end', function(){
+		console.log('client disconnected')
+		msp.removeListener('frame', fromFC)
+	})
+})
+server.maxConnections = 1
+server.on('error', function(err){
+	console.log('client err', err)
+});
+server.listen(2323)
+
 

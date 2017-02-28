@@ -99,6 +99,8 @@ MSP.prototype.readbytes = function (data){
 				} else {
 					// no payload
 					self.state += 5;
+					self.message_buffer = new ArrayBuffer(0);
+					self.message_buffer_uint8_view = new Uint8Array(self.message_buffer);
 				}
 				break;
 			case 5:
@@ -331,7 +333,7 @@ MSP.prototype.parseFrame = function (frame, dir){
 			obj.active_channels = data.byteLength / 2
 			obj.channels = []
 			var channels = obj.channels
-			for (var i = 0; i < RC.active_channels; i++) {
+			for (var i = 0; i < obj.active_channels; i++) {
 				channels.push(data.readU16())
 			}
 			break
