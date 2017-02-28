@@ -496,6 +496,10 @@ MSP.prototype.parseFrame = function (frame, dir){
 			console.log('RCMAP saved')
 			break
 
+// skip
+		case MSPCodes.MSP_EXT_CMD:
+			break
+
 		default:
 			console.log('code not found', code, data)
 	}

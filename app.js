@@ -15,7 +15,7 @@ msp.on('frame', function(err, frame){
 //	console.log((new Date()).getTime(), 'data', obj)
 })
 msp.on('data', function(obj){
-	console.log((new Date()).getTime(), 'data', obj.code, obj)
+//	console.log((new Date()).getTime(), 'data', obj.code, obj)
 })
 
 msp.on('extcmd', function(frame){
@@ -24,7 +24,7 @@ msp.on('extcmd', function(frame){
 
 
 var client = net.connect(2323, '192.168.1.115', function(){
-	console.log('connected to server!', msp)
+	console.log('connected to FC!', msp)
 
 	msp.setSender(function(data){
 		//console.log('_write', data)
@@ -34,6 +34,9 @@ var client = net.connect(2323, '192.168.1.115', function(){
 	msp.pull_FC_info()
 
 	//ping()
+})
+client.on('error', function(err){
+	console.log('FC err', err)
 })
 client.on('data', function(data){
 	//console.log(data)
@@ -49,6 +52,14 @@ function ping(){
 	var t = setTimeout(ping, 1500)
 }
 
+function sendEx(cmd, data){
+	var code = Buffer.alloc(2)
+	code.writeUInt16LE(cmd, 0)
+	var buf = msp.create_message(msp.Codes.MSP_EXT_CMD, Buffer.concat([code, data]), false)
+	console.log('sendEx', code, buf)
+	client.write(buf)
+}
+
 var server = net.createServer(function(socket){
 	console.log('client connected')
 	socket.msp = new MSP()
@@ -57,6 +68,13 @@ var server = net.createServer(function(socket){
 		console.log((new Date()).getTime(), 'socket err', err)
 	})
 
+
+	var pos = Buffer.alloc(4 * 3)
+	pos.writeInt32LE(1, 0)
+	pos.writeInt32LE(3, 4)
+	pos.writeInt32LE(9999, 8)
+	sendEx(2, pos)
+
 	// client >> server >> FC
 	socket.on('data', function(data){
 		//console.log((new Date()).getTime(), data)
@@ -64,7 +82,7 @@ var server = net.createServer(function(socket){
 	})
 	socket.msp.on('frame', function(err, frame){
 		if(err) return
-		console.log((new Date()).getTime(), '>> FC', frame.code, frame.data)
+		//console.log((new Date()).getTime(), '>> FC', frame.code, frame.data)
 		var buf = msp.create_message(frame.code, frame.data, false)
 		client.write(buf)
 	})
