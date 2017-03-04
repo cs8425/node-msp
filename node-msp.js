@@ -29,6 +29,8 @@ var MSP = function () {
 
 
 	self.sender = null
+	self.sendFIFO = []
+	self.sending = false
 //	self.on('data', read)
 };
 
@@ -43,6 +45,24 @@ MSP.prototype.setSender = function(func){
 		self.sender = func
 	}else{
 		self.sender = null
+	}
+}
+
+MSP.prototype.sendRawFrame = function(rawFrame){
+	var self = this
+	self.sendFIFO.push(rawFrame)
+	if(!self.sending){
+		process.nextTick(self.sendWorker, self)
+	}
+}
+
+MSP.prototype.sendWorker = function(self){
+//	var self = this
+	if(self.sendFIFO.length){
+		self.sender(self.sendFIFO.shift())
+	}
+	if(self.sendFIFO.length){
+		process.nextTick(self.sendWorker, self)
 	}
 }
 
@@ -227,9 +247,7 @@ MSP.prototype.create_message = function (code, data, dir) {
 MSP.prototype.send_message = function (code, data, callback) {
 	var self = this
 	var buf = self.create_message(code, data)
-	if(self.sender){
-		self.sender(buf)
-	}
+	self.sendRawFrame(buf)
 }
 
 MSP.prototype.pull_FC_info = function (callback) {
