@@ -516,6 +516,7 @@ MSP.prototype.parseFrame = function (frame, dir){
 
 // skip
 		case MSPCodes.MSP_EXT_CMD:
+		case MSPCodes.MSP_ANALOG:
 			break
 
 		default:
