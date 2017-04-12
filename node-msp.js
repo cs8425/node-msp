@@ -52,7 +52,8 @@ MSP.prototype.sendRawFrame = function(rawFrame){
 	var self = this
 	self.sendFIFO.push(rawFrame)
 	if(!self.sending){
-		process.nextTick(self.sendWorker, self)
+//		process.nextTick(self.sendWorker, self)
+		setImmediate(self.sendWorker, self)
 	}
 }
 
@@ -62,7 +63,8 @@ MSP.prototype.sendWorker = function(self){
 		self.sender(self.sendFIFO.shift())
 	}
 	if(self.sendFIFO.length){
-		process.nextTick(self.sendWorker, self)
+//		process.nextTick(self.sendWorker, self)
+		setImmediate(self.sendWorker, self)
 	}
 }
 
